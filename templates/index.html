@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon-16x16.png">
+    <link rel="manifest" href="/static/site.webmanifest">
+    <link rel="mask-icon" href="/static/safari-pinned-tab.svg" color="#5bbad5">
+    <meta name="msapplication-TileColor" content="#4d9cb3">
+    <meta name="theme-color" content="#ffffff">
+    <title>Web Scraper</title>
+
+    <style>
+        /* Add your loading indicator styles here */
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        label {
+            display: block;
+            background-color: salmon;
+            padding: 7px 40px 7px 40px;
+            border-radius: 25px;
+        }
+
+        /* Center the form */
+        form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            /* 100% of the viewport height */
+        }
+
+        /* Style the form elements if needed */
+        label,
+        input,
+        button {
+            margin: 5px;
+        }
+
+        input {
+            width: 40%;
+            border-radius: 30px;
+            padding: 10px;
+        }
+
+        #pageTitle {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        #jobs {
+            font-family: Arial, Helvetica, sans-serif;
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        #jobs td,
+        #jobs th {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+
+        #jobs tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        #jobs tr:hover {
+            background-color: #ddd;
+        }
+
+        #jobs th {
+            padding-top: 12px;
+            padding-bottom: 12px;
+            text-align: left;
+            background-color: gray;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+    <h1 id="pageTitle">LinkedIn Job Board Scraper</h1>
+    <form method="post">
+        <label for="url">Enter URL:</label>
+        <input type="text" name="url" required>
+        <button type="submit" id="scrapeButton">Scrape</button>
+    </form>
+
+    <!-- Loading indicator -->
+    <div id="loading" class="loading">
+        Loading...
+    </div>
+
+
+    <input type="text" id="myInput" onkeyup="myFunction()" placeholder="Search for job names..">
+
+    {% if result %}
+    <table id="jobs">
+        <thead>
+            <tr>
+                <th>Job Title</th>
+                <th>Company Name</th>
+                <th>Location</th>
+                <th>List Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for job in result %}
+            <tr>
+                <td>{{ job.jobTitle }}</td>
+                <td>{{ job.companyName }}</td>
+                <td>{{ job.companyLocation }}</td>
+                <td>{{ job.listDate }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Show loading indicator on form submission
+            var scrapeButton = document.getElementById('scrapeButton');
+            if (scrapeButton) {
+                scrapeButton.addEventListener('click', function () {
+                    document.getElementById('loading').style.display = 'block';
+                });
+            }
+        });
+
+
+        function myFunction() {
+            // Declare variables
+            var input, filter, table, tr, td, i, txtValue;
+            input = document.getElementById("myInput");
+            filter = input.value.toUpperCase();
+            table = document.getElementById("jobs");
+            tr = table.getElementsByTagName("tr");
+
+            // Loop through all table rows, and hide those who don't match the search query
+            for (i = 0; i < tr.length; i++) {
+                td = tr[i].getElementsByTagName("td")[0];
+                if (td) {
+                    txtValue = td.textContent || td.innerText;
+                    if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                        tr[i].style.display = "";
+                    } else {
+                        tr[i].style.display = "none";
+                    }
+                }
+            }
+        }
+        const getCellValue = (tr, idx) => tr.children[idx].innerText || tr.children[idx].textContent;
+
+        const comparer = (idx, asc) => (a, b) => ((v1, v2) =>
+            v1 !== '' && v2 !== '' && !isNaN(v1) && !isNaN(v2) ? v1 - v2 : v1.toString().localeCompare(v2)
+        )(getCellValue(asc ? a : b, idx), getCellValue(asc ? b : a, idx));
+
+        // do the work...
+        document.querySelectorAll('th').forEach(th => th.addEventListener('click', (() => {
+            const table = th.closest('table');
+            Array.from(table.querySelectorAll('tr:nth-child(n+2)'))
+                .sort(comparer(Array.from(th.parentNode.children).indexOf(th), this.asc = !this.asc))
+                .forEach(tr => table.appendChild(tr));
+        })));
+    </script>
+</body>
+
+</html>
